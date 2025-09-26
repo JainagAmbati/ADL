@@ -18,7 +18,7 @@ class QLoRALinear(Linear4Bit):
         super().__init__(in_features, out_features, bias, group_size)
         self.lora_a = torch.nn.Parameter(torch.randn(lora_dim, in_features) * 0.01)
         self.lora_b = torch.nn.Parameter(torch.randn(out_features, lora_dim) * 0.01)
-        self.lora_scale = 1.0
+        self.lora_scale = 0.8
         for param in self.parameters():
             param.requires_grad = False
         self.lora_a.requires_grad = True
