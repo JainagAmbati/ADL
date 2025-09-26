@@ -10,7 +10,7 @@ class LoRALinear(HalfLinear):
         # LoRA adapters, float32 for training updates
         self.lora_a = torch.nn.Parameter(torch.randn(lora_dim, in_features) * 0.01)
         self.lora_b = torch.nn.Parameter(torch.randn(out_features, lora_dim) * 0.01)
-        self.lora_scale = 0.8
+        self.lora_scale = 0.9
         for param in self.parameters():
             param.requires_grad = False
         self.lora_a.requires_grad = True
