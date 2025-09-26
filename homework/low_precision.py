@@ -44,7 +44,8 @@ class Linear4Bit(torch.nn.Module):
         # Let's store all the required information to load the weights from a checkpoint
         self._shape = (out_features, in_features)
         self._group_size = group_size
-
+        self.out_features = out_features
+        self.in_features = in_features
         # self.register_buffer is used to store the weights in the model, but not as parameters
         # This makes sure weights are put on the correct device when calling `model.to(device)`.
         # persistent=False makes sure the buffer is not saved or loaded. The bignet has a parameters
@@ -75,14 +76,19 @@ class Linear4Bit(torch.nn.Module):
             # Load the original weights and remove them from the state_dict (mark them as loaded)
             weight = state_dict[f"{prefix}weight"]  # noqa: F841
             del state_dict[f"{prefix}weight"]
-            # TODO: Quantize the weights and store them in self.weight_q4 and self.weight_norm
-            raise NotImplementedError()
+            q4, norm = [], []
+            for row in weight:
+                qrow, nrow = block_quantize_4bit(row.detach().view(-1), self.groupsize)
+                q4.append(qrow)
+                norm.append(nrow)
+            self.weight_q4 = torch.stack(q4).to(torch.uint8)
+            self.weight_norm = torch.stack(norm).to(torch.float16)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
-            # TODO: Dequantize and call the layer
-            # Hint: You can use torch.nn.functional.linear
-            raise NotImplementedError()
+            weight = block_dequantize_4bit(self.weight_q4, self.weight_norm)
+            weight = weight.view(self.out_features, self.in_features)
+            return torch.nn.functional.linear(x, weight, self.bias)
 
 
 class BigNet4Bit(torch.nn.Module):
@@ -94,16 +100,32 @@ class BigNet4Bit(torch.nn.Module):
     class Block(torch.nn.Module):
         def __init__(self, channels):
             super().__init__()
-            # TODO: Implement me (feel free to copy and reuse code from bignet.py)
-            raise NotImplementedError()
+            self.model = torch.nn.Sequential(
+            Linear4Bit(channels, channels),
+            torch.nn.ReLU(),
+            Linear4Bit(channels, channels),
+            torch.nn.ReLU(),
+            Linear4Bit(channels, channels)
+        )
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.model(x) + x
 
     def __init__(self):
         super().__init__()
-        # TODO: Implement me (feel free to copy and reuse code from bignet.py)
-        raise NotImplementedError()
+        self.model = torch.nn.Sequential(
+            self.Block(BIGNET_DIM),
+            LayerNorm(BIGNET_DIM),
+            self.Block(BIGNET_DIM),
+            LayerNorm(BIGNET_DIM),
+            self.Block(BIGNET_DIM),
+            LayerNorm(BIGNET_DIM),
+            self.Block(BIGNET_DIM),
+            LayerNorm(BIGNET_DIM),
+            self.Block(BIGNET_DIM),
+            LayerNorm(BIGNET_DIM),
+            self.Block(BIGNET_DIM),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
@@ -114,3 +136,5 @@ def load(path: Path | None) -> BigNet4Bit:
     if path is not None:
         net.load_state_dict(torch.load(path, weights_only=True))
     return net
+
+#jainag
