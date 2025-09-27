@@ -8,8 +8,8 @@ class LoRALinear(HalfLinear):
     def __init__(self, in_features, out_features, lora_dim, bias=True):
         super().__init__(in_features, out_features, bias=bias)
         # LoRA adapters, float32 for training updates
-        self.lora_a = torch.nn.Parameter(torch.randn(lora_dim, in_features) * 0.01)
-        self.lora_b = torch.nn.Parameter(torch.randn(out_features, lora_dim) * 0.01)
+        self.lora_a = torch.nn.Parameter(torch.randn(lora_dim, in_features) * 0.001)
+        self.lora_b = torch.nn.Parameter(torch.randn(out_features, lora_dim) * 0.001)
         self.lora_scale = 0.9
         for param in self.parameters():
             param.requires_grad = False
@@ -61,7 +61,7 @@ class LoraBigNet(torch.nn.Module):
         return self.model(x)
 
 
-def load(path: Path = None, lora_dim=2) -> LoraBigNet:
+def load(path: Path = None, lora_dim=8) -> LoraBigNet:
     net = LoraBigNet(lora_dim)
     if path is not None:
         net.load_state_dict(torch.load(path, weights_only=True), strict=False)

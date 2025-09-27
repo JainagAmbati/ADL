@@ -45,7 +45,7 @@ def fit_binary_classifier(model: torch.nn.Module, steps: int = 5000):
     return best_accuracy
 
 
-def load_model_and_fit_binary_classifier(model_name: str, steps: int = 50):
+def load_model_and_fit_binary_classifier(model_name: str, steps: int = 20):
     model = load_model(model_name, "bignet.pth")
     return fit_binary_classifier(model, steps)
 
