@@ -63,7 +63,7 @@ def case(func, kwargs=None, score=1, extra_credit=False, timeout=1000):
                 tick = time.time()
                 v = func(self, **a)
                 elapsed = time.time() - tick
-
+                print("my print time:",elapsed)
                 if elapsed > timeout / 1000:
                     raise TimeoutError(f"Timeout after {elapsed:.2f} s")
 

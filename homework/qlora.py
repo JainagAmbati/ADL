@@ -31,6 +31,7 @@ class QLoRALinear(Linear4Bit):
         lora_out = torch.nn.functional.linear(
             torch.nn.functional.linear(x.float(), self.lora_a), self.lora_b
         ) * self.lora_scale
+        # lora_out = self.lora_b(self.lora_a(x.to(torch.float))).to(x.dtype)
         return base_out + lora_out.to(base_out.dtype)
 
 
